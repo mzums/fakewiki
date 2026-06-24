@@ -14,3 +14,7 @@ Roadmap:
 - transformer block
 - skip connection
 - layer norm
+- tokenizing
+  - bpe
+  - 3.4x compression ratio (for 1041830 characters in the dataset and vocab_size=5000)
+  - I will probably use tiktoken in the end (4.3x compressionratio for now)
