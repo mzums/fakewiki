@@ -97,3 +97,68 @@ class GPT(nn.Module):
             ln_f = nn.LayerNorm(config.n_emb),                                  # linear layer at the end
         ))
         self.lm_head = nn.Linear(config.n_emb, config.vocab_size, bias=False)
+
+    def forward(self, idx):
+        B, T = idx.size()
+        assert T <= self.config.block_size, f"Cannot forward sequence of length {T}, block size is only {self.config.block_size}"
+        # forward token and position embeddings
+        # [0, 1, 2, ..., T-1] of shape (T,)
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device)   # shape (T)
+        pos_emb = self.transformer.wpe(pos) # (T,) -> (T, n_emb)
+        tok_emb = self.transformer.wte(idx) # (B, T) -> (B, T, n_emb)
+        x = tok_emb + pos_emb               # (B, T, n_emb)
+        # forward the blocks of the transformer
+        for block in self.transformer.h:
+            x = block(x)
+        # forward the layernorm and the classifier
+        x = self.transformer.ln_f(x)        # (B, T, n_emb)
+        logits = self.lm_head(x)            # (B, T, vocab_size)
+        return logits
+
+    @classmethod
+    def from_pretrained(cls, model_type):
+        assert model_type in {"gpt2", "gpt2-medium", "gpt2-large", "gpt2-xl"}
+        from transformers import GPT2LMHeadModel
+        print("loading weights from pretrained gpt: %s" % model_type)
+
+        config_args = {
+            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768),    # 124M params
+            'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024),   # 350M
+            'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280),   # 774M
+            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600),   # 1558M
+        }[model_type]
+        config_args['vocab_size'] = 50257
+        config_args['block_size'] = 1024
+        config = GPTConfig(**config_args)
+        model = GPT(config)
+        sd = model.state_dict()
+        sd_keys = sd.keys()
+        # ignore buffers, they shouldn't be trained
+        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')]
+
+        model_hf = GPT2LMHeadModel.from_pretrained(model_type)
+        sd_hf = model_hf.state_dict()
+        
+        sd_keys_hf = sd_hf.keys()
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')]
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')]
+        # originally the linear layers were Conv1D with kernel=1 and were kept in (kernel_size, in_channels, out_channels)
+        # in pytorch linear layers require (out, in) (it's more afficient) so we need to transpose the weights
+        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
+
+        assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
+        for k in sd_keys_hf:
+            if any(k.endswith(w) for w in transposed):
+                assert sd_hf[k].shape[::-1] == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hf[k].t())
+            else:
+                assert sd_hf[k].shape == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hf[k])
+
+        return model
+    
+# --------------------------------------
+
+model = GPT.from_pretrained('gpt2')
