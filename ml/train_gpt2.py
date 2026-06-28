@@ -161,7 +161,19 @@ class GPT(nn.Module):
     
 # --------------------------------------
 
-model = GPT.from_pretrained('gpt2')
+device = "cpu"
+if torch.cuda.is_available():
+    device = "cuda"
+elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    device = "mps"
+print(f"using device: {device}")
+
+
+# get a data batch
+import tiktoken
+enc = tiktoken.get_encoding
+
+
 num_return_sequences = 5
 max_length = 30
 
