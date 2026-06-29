@@ -98,7 +98,10 @@ class GPT(nn.Module):
         ))
         self.lm_head = nn.Linear(config.n_emb, config.vocab_size, bias=False)
 
-    def forward(self, idx):
+        # weight sharing scheme
+        self.transformer.wte.weight = self.lm_head.weight
+
+    def forward(self, idx, targets=None):
         B, T = idx.size()
         assert T <= self.config.block_size, f"Cannot forward sequence of length {T}, block size is only {self.config.block_size}"
         # forward token and position embeddings
@@ -113,7 +116,10 @@ class GPT(nn.Module):
         # forward the layernorm and the classifier
         x = self.transformer.ln_f(x)        # (B, T, n_emb)
         logits = self.lm_head(x)            # (B, T, vocab_size)
-        return logits
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        return logits, loss
 
     @classmethod
     def from_pretrained(cls, model_type):
@@ -158,6 +164,36 @@ class GPT(nn.Module):
                     sd[k].copy_(sd_hf[k])
 
         return model
+
+
+import tiktoken
+
+class DataLoaderLite:
+    
+    def __init__(self, B, T):
+        self.B = B
+        self.T = T
+
+        with open('../dev/wiki_clean.txt', 'r') as f:
+            text = f.read()
+        enc = tiktoken.get_encoding('gpt2')
+        tokens = enc.encode(text)
+        self.tokens = torch.tensor(tokens)
+        print(f"loaded {len(tokens)} tokens")
+        print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
+
+        self.current_position = 0
+
+    def next_batch(self):
+        B, T = self.B, self.T
+        buf = self.tokens[self.current_position : self.current_position + B*T + 1]
+        x = buf[:-1].view(B, T)
+        y = buf[1:].view(B, T)
+        self.current_position += B*T
+        # if loading the next batch would be out of bounds, reset
+        if self.current_position + (B*T + 1) > len(self.tokens):
+            self.current_position = 0
+        return x, y
     
 # --------------------------------------
 
@@ -168,22 +204,32 @@ elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
     device = "mps"
 print(f"using device: {device}")
 
-
-# get a data batch
-import tiktoken
-enc = tiktoken.get_encoding
-
-
 num_return_sequences = 5
 max_length = 30
 
+train_loader = DataLoaderLite(B=4, T=32)
+
+# get logits
 #model = GPT.from_pretrained('gpt2')
 model = GPT(GPTConfig())
-model.eval()
-model.to('cuda')
+model.to(device)
+#logits, loss = model(x, y)
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
+for i in range(50):
+    x, y = train_loader.next_batch()
+    x, y = x.to(device), y.to(device)
+    optimizer.zero_grad()
+    logits, loss = model(x, y)
+    loss.backward()
+    optimizer.step()
+    print(f"step {i}, loss: {loss.item()  }")
+
+
+print(loss)
+import sys; sys.exit(0)
 
 # prefix tokens
-import tiktoken
 enc = tiktoken.get_encoding('gpt2')
 tokens = enc.encode("Hello, I'm a language model,")
 tokens = torch.tensor(tokens, dtype=torch.long)
