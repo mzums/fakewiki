@@ -176,10 +176,10 @@ class DataLoaderLite:
         self.B = B
         self.T = T
 
-        with open('../dev/wiki_clean2.txt', 'r') as f:
+        with open('../dev/wiki_clean.txt', 'r') as f:
             text = f.read()
         enc = tiktoken.get_encoding('gpt2')
-        tokens = enc.encode(text, allowed_special={"<|endoftext|>"})
+        tokens = enc.encode(text)
         self.tokens = torch.tensor(tokens)
         print(f"loaded {len(tokens)} tokens")
         print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
@@ -232,11 +232,39 @@ print(loss)
 #import sys; sys.exit(0)
 
 # prefix tokens
-enc = tiktoken.get_encoding('gpt2')
-tokens = enc.encode("Hello, I'm a language model,")
-tokens = torch.tensor(tokens, dtype=torch.long)
-tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)    # (5, 8) 5 samples
+# load data
+flat_tokens = np.load('../dev/tokens_flat.npy')   # (total_length,)
+lengths = np.load('../dev/tokens_lengths.npy')    # (liczba_artykułów,)
+
+# get tokens for every article
+all_tokens = []
+start = 0
+for length in lengths:
+    all_tokens.append(flat_tokens[start:start+length].tolist())
+    start += length
+
+# get article
+tokens_list = all_tokens[0]
+
+# get starting tensor
+tokens = torch.tensor(tokens_list, dtype=torch.long)
+tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)   # (num_return_sequences, seq_len)
 x = tokens.to('cuda')
+
+
+def decode(ids):
+    tokens = b"".join(vocab[idx] for idx in ids)
+    # delete all the 0 bytes
+    tokens = tokens.replace(b'\x00', b'')
+    text = tokens.decode("utf-8", errors="replace")
+    return text
+
+
+with open('../dev/vocab.json', 'r', encoding='utf-8') as f:
+    vocab_as_strings = json.load(f)
+
+vocab = [token.encode('utf-8') for token in vocab_as_strings]
+
 
 # generating
 # x is (B, T) where B=5, T=8
@@ -245,7 +273,7 @@ torch.cuda.manual_seed(42)
 while x.size(1) < max_length:
     # forward the model to get logits
     with torch.no_grad():
-        logits, loss = model(x)           # (B, T, vocab_size)
+        logits = model(x)           # (B, T, vocab_size)
         # predictions for the last token, inefective but okay here
         logits = logits[:, -1, :]   # (B, T, vocab_size) -> (B, vocab_size)
         probs = F.softmax(logits, dim=-1)
@@ -261,5 +289,5 @@ while x.size(1) < max_length:
 # print the generated text
 for i in range(num_return_sequences):
     tokens = x[i, :max_length].tolist()
-    decoded = enc.decode(tokens)
+    decoded = decode(tokens)
     print(">", decoded)
