@@ -24,6 +24,11 @@ Roadmap:
   - optimization
     - change `set_float32_matmul_precision`
     - BFLOAT16
+    - `torch.compile`
+    - FlashAttention
+    - change vocab size to 50304
+    - learning rate decay
+    - fused AdamW
 
 ![alt text](image.png)
 _from https://medium.com/@vipul.koti333/from-theory-to-code-step-by-step-implementation-and-code-breakdown-of-gpt-2-model-7bde8d5cecda_
