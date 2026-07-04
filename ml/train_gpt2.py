@@ -8,6 +8,7 @@ import json
 import time
 import inspect
 import os
+from datetime import datetime
 
 # ---------------------------------------------
 
@@ -88,10 +89,10 @@ class Block(nn.Module):
 @dataclass
 class GPTConfig:
     block_size: int = 1024
-    vocab_size: int = 50257     # 50k BPE merges + 256 bytes tokens + 1 <|endoftext|> token
-    n_layer: int = 12
-    n_head: int = 12
-    n_emb: int = 768
+    vocab_size: int = 50257
+    n_layer: int = 6
+    n_head: int = 6
+    n_emb: int = 384
 
 
 class GPT(nn.Module):
@@ -213,38 +214,37 @@ class GPT(nn.Module):
         optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=use_fused)
         return optimizer
 
-# dlaczego decay w wagach ale nie w biasach?
-# na czym dokładniej polega fused?
-# co robi inspect.signature, czym jest sygnartura funkcji?
 
 import tiktoken
+import torch
+
+import numpy as np
+import torch
 
 class DataLoaderLite:
-    
-    def __init__(self, B, T, process_rank, num_processes):
+    def __init__(self, B, T, process_rank, num_processes, token_file="tokens.bin"):
         self.B = B
         self.T = T
         self.process_rank = process_rank
         self.num_processes = num_processes
-
-        with open('../dev/wiki_clean2.txt', 'r') as f:
-            text = f.read()
-        enc = tiktoken.get_encoding('gpt2')
-        tokens = enc.encode(text, allowed_special={"<|endoftext|>"})
-        self.tokens = torch.tensor(tokens)
-        print(f"loaded {len(tokens)} tokens")
-        print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
-
+        
+        # Open binary file in memory-mapped mode (data on disk)
+        self.tokens = np.memmap(token_file, dtype=np.uint32, mode='r')
+        self.num_tokens = len(self.tokens)
+        print(f"Loaded {self.num_tokens} tokens (memory-mapped)")
+        print(f"1 epoch = {self.num_tokens // (B*T)} batches")
+        
         self.current_position = self.B * self.T * self.process_rank
 
     def next_batch(self):
         B, T = self.B, self.T
-        buf = self.tokens[self.current_position : self.current_position + B*T + 1]
+        pos = self.current_position
+        # get fragment with memmap 
+        buf = torch.from_numpy(self.tokens[pos : pos + B*T + 1]).to(torch.long)
         x = buf[:-1].view(B, T)
         y = buf[1:].view(B, T)
         self.current_position += B * T * self.num_processes
-        # if loading the next batch would be out of bounds, reset
-        if self.current_position + (B*T*self.num_processes + 1) > len(self.tokens):
+        if self.current_position + (B*T*self.num_processes + 1) > self.num_tokens:
             self.current_position = self.B * self.T * self.process_rank
         return x, y
     
@@ -285,7 +285,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed(1337)
 
 # gradient accumulation
-total_batch_size = 524288   # 2**19 ~0.5M tokens
+total_batch_size = 131072   # 2**19 ~0.5M tokens
 B = 16      # micro batch size
 T = 1024    # sequence length
 assert total_batch_size % (B * T * ddp_world_size) == 0, "total_batch_size shoudl be divisibel by B * T * ddp_world_size"
@@ -300,18 +300,23 @@ torch.set_float32_matmul_precision('medium')
 
 # create model
 #model = GPT.from_pretrained('gpt2')
-model = GPT(GPTConfig(vocab_size=50304))
+#model = GPT(GPTConfig(vocab_size=50304))
+
+
+config = GPTConfig()
+model = GPT(config)
 model.to(device)
 model = torch.compile(model)
+
 if ddp:
     model = DDP(model, device_ids=[ddp_local_rank])
 raw_model = model.module if ddp else model
 
 # cosine learning rate decay
-max_lr = 6e-4
+max_lr = 1e-3
 min_lr = max_lr * 0.1
-warmup_steps = 10
-max_steps = 50
+warmup_steps = 100
+max_steps = 5000
 
 def get_lr(it):
     if it < warmup_steps:
@@ -326,7 +331,7 @@ def get_lr(it):
 
 optimizer = raw_model.configure_optimizers(weight_decay=0.1, learning_rate=6e-4, device=device)
 
-for step in range(50):
+for step in range(max_steps):
     t0 = time.time()
     optimizer.zero_grad()
     loss_accum = 0.0
@@ -353,21 +358,33 @@ for step in range(50):
     dt = (t1 - t0)
     tokens_processed = train_loader.B * train_loader.T * grad_accum_steps * ddp_world_size
     tokens_per_sec = tokens_processed / dt
-    if master_process:
-        print(f"step {step}, loss: {loss_accum.item():.6f}, lr: {lr:.4e} norm: {norm:4f} | dt: {dt:.2f}ms, tok/sec: {tokens_per_sec:.2f}")
+    if master_process and step % 50 == 0:
+        print(
+            f"step {step}, loss: {loss_accum.item():.6f}, "
+            f"[{datetime.now().strftime('%H:%M:%S')}] "
+            f"lr: {lr:.4e} norm: {norm:.4f} | "
+            f"dt: {dt:.2f}s, tok/sec: {tokens_per_sec:.2f}"
+        )
+
+
+if master_process:
+    torch.save({
+    'model_state_dict': raw_model.state_dict(),
+    'config': config
+}, "model_final.pt")
 
 if ddp:
     destroy_process_group()
 
 
-import sys; sys.exit(0)
+#import sys; sys.exit(0)
 
 num_return_sequences = 5
 max_length = 30
 
 # prefix tokens
 enc = tiktoken.get_encoding('gpt2')
-tokens = enc.encode("Hello, I'm a language model,")
+tokens = enc.encode("TITLE:")
 tokens = torch.tensor(tokens, dtype=torch.long)
 tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)    # (5, 8) 5 samples
 x = tokens.to('cuda')
@@ -379,7 +396,7 @@ torch.cuda.manual_seed(42)
 while x.size(1) < max_length:
     # forward the model to get logits
     with torch.no_grad():
-        logits, loss = model(x)           # (B, T, vocab_size)
+        logits, loss = raw_model(x)           # (B, T, vocab_size)
         # predictions for the last token, inefective but okay here
         logits = logits[:, -1, :]   # (B, T, vocab_size) -> (B, vocab_size)
         probs = F.softmax(logits, dim=-1)
