@@ -222,16 +222,26 @@ import numpy as np
 import torch
 
 class DataLoaderLite:
-    def __init__(self, B, T, process_rank, num_processes, token_file="tokens.bin"):
+    def __init__(self, B, T, process_rank, num_processes, token_file="tokens.bin", 
+                 split='train', val_frac=0.05):
         self.B = B
         self.T = T
         self.process_rank = process_rank
         self.num_processes = num_processes
+        self.split = split
         
-        # Open binary file in memory-mapped mode (data on disk)
+        # open in memory mapped mode
         self.tokens = np.memmap(token_file, dtype=np.uint32, mode='r')
+        total_tokens = len(self.tokens)
+        
+        split_idx = int(total_tokens * (1 - val_frac))
+        if split == 'train':
+            self.tokens = self.tokens[:split_idx]
+        else:
+            self.tokens = self.tokens[split_idx:]
+            
         self.num_tokens = len(self.tokens)
-        print(f"Loaded {self.num_tokens} tokens (memory-mapped)")
+        print(f"Loaded {self.num_tokens} tokens for {split} split")
         print(f"1 epoch = {self.num_tokens // (B*T)} batches")
         
         self.current_position = self.B * self.T * self.process_rank
@@ -239,13 +249,15 @@ class DataLoaderLite:
     def next_batch(self):
         B, T = self.B, self.T
         pos = self.current_position
-        # get fragment with memmap 
         buf = torch.from_numpy(self.tokens[pos : pos + B*T + 1]).to(torch.long)
         x = buf[:-1].view(B, T)
         y = buf[1:].view(B, T)
         self.current_position += B * T * self.num_processes
         if self.current_position + (B*T*self.num_processes + 1) > self.num_tokens:
-            self.current_position = self.B * self.T * self.process_rank
+            if self.split == 'train':
+                self.current_position = self.B * self.T * self.process_rank
+            else:
+                self.current_position = self.B * self.T * self.process_rank
         return x, y
     
 # --------------------------------------
@@ -253,6 +265,26 @@ class DataLoaderLite:
 from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
+
+
+@torch.no_grad()
+def evaluate_loss(model, val_loader, grad_accum_steps, device, ddp):
+    model.eval()
+    loss_accum = 0.0
+    num_batches = 20  # num bathes toaverage
+    val_loader.current_position = val_loader.B * val_loader.T * val_loader.process_rank
+    for micro_step in range(num_batches):
+        x, y = val_loader.next_batch()
+        x, y = x.to(device), y.to(device)
+        with torch.autocast(device_type=device, dtype=torch.bfloat16):
+            logits, loss = model(x, y)
+        loss = loss / num_batches   # avg
+        loss_accum += loss.detach()
+    if ddp:
+        dist.all_reduce(loss_accum, op=dist.ReduceOp.AVG)
+    model.train()
+    return loss_accum.item()
+
 
 # DDP (distributed data parallel)
 # torchrun sets variables RANK, LOCAL_RANK and WORLD_SIZE
@@ -294,7 +326,8 @@ if master_process:
     print(f"total desired batch size: {total_batch_size}")
     print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
 
-train_loader = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size)
+train_loader = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, split='train')
+val_loader   = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, split='val')
 
 torch.set_float32_matmul_precision('medium')
 
@@ -313,10 +346,10 @@ if ddp:
 raw_model = model.module if ddp else model
 
 # cosine learning rate decay
-max_lr = 1e-3
+max_lr = 6e-4
 min_lr = max_lr * 0.1
 warmup_steps = 100
-max_steps = 5000
+max_steps = 20000
 
 def get_lr(it):
     if it < warmup_steps:
@@ -330,6 +363,39 @@ def get_lr(it):
     return min_lr + coeff * (max_lr - min_lr)
 
 optimizer = raw_model.configure_optimizers(weight_decay=0.1, learning_rate=6e-4, device=device)
+
+
+def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.0, top_k=1):
+    model.eval()
+    enc = tiktoken.get_encoding('gpt2')
+    prompt_tokens = enc.encode(prompt)
+    x = torch.tensor(prompt_tokens, dtype=torch.long, device=device).unsqueeze(0)
+    generated = []
+    with torch.inference_mode():
+        for _ in range(max_new_tokens):
+            if x.size(1) > config.block_size:
+                x = x[:, -config.block_size:]
+            logits, _ = model(x)
+            logits = logits[:, -1, :]
+            if temperature > 0:
+                probs = F.softmax(logits / temperature, dim=-1)
+                if top_k is not None:
+                    topk_probs, topk_indices = torch.topk(probs, top_k)
+                    ix = torch.multinomial(topk_probs, 1)
+                    xcol = torch.gather(topk_indices, -1, ix)
+                else:
+                    xcol = torch.multinomial(probs, 1)
+            else:
+                xcol = logits.argmax(dim=-1, keepdim=True)
+            if xcol.item() == 50256:  # EOS token
+                break
+            x = torch.cat((x, xcol), dim=1)
+            generated.append(xcol.item())
+    model.train()
+    full_tokens = prompt_tokens + generated
+    return enc.decode(full_tokens)
+
+
 
 for step in range(max_steps):
     t0 = time.time()
@@ -365,6 +431,21 @@ for step in range(max_steps):
             f"lr: {lr:.4e} norm: {norm:.4f} | "
             f"dt: {dt:.2f}s, tok/sec: {tokens_per_sec:.2f}"
         )
+
+    if step % 100 == 0 and master_process:
+        val_loss = evaluate_loss(raw_model, val_loader, grad_accum_steps, device, ddp)
+        print(f"\nstep {step} | validation loss: {val_loss:.6f}\n")
+
+
+    if step % 1000 == 0 and master_process:
+        prompt = "TITLE: Albert Einstein\n\nABSTRACT:"
+        sample = generate_text(raw_model, prompt, config, max_new_tokens=100, temperature=0.0)
+        print(f"\n{'='*60}")
+        print(f"SAMPLE GENERATION at step {step}:")
+        print(f"{'='*60}")
+        print(sample)
+        print(f"{'='*60}\n")
+
 
 
 if master_process:
