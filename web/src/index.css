@@ -1,19 +1,42 @@
-#root {
-  width: 100%;
+:root {
+  --bg: white;
+  --text: black;
+  --card: #f2f2f2;
+}
+
+body.dark {
+  --bg: #080808;
+  --header: rgb(22, 22, 22);;
+  --text: white;
+  --card: #2a2a2a;
+  --border: #3d3d3d;
+  --link: rgb(0, 195, 255);
+  --footer: #3d0b0b;
+}
+
+body.light {
+  --bg: white;
+  --header: white
+  --text: black;
+  --card: #f2f2f2;
+  --border: rgb(146, 181, 255);
+  --link:rgb(35, 80, 204);
+  --footer: #910101;
 }
 
 body {
   margin: 0;
-  background-color: #1b1b1b;
   min-height: 100vh;
-  display: flex;
-  color: white;
-  font-weight:normal;
-  font-family: sans-serif
+  background: var(--bg);
+  color: var(--text);
+  font-family: sans-serif;
+}
+
+body {
+  transition: background 0.3s, color 0.3s;
 }
 
 h1 {
-  color:rgb(255, 255, 255);
   font-weight:normal;
   margin: 0;
 }
@@ -36,6 +59,7 @@ p {
 
 #welcome {
   margin-top: 50px;
+  margin-bottom: 30px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -44,17 +68,114 @@ p {
   gap: 6px;
 }
 
+#view-all {
+  margin: 10px;
+  margin-left: 20px;
+}
+
 #card {
-  margin-top: 40px;
+  margin: 5px;
   width: 600px;
-  border: 1px solid #3d3d3d;
+  border: 1px solid var(--border);
 }
 
 #card-title {
-  padding: 15px;
+  padding: 12px;
   border-bottom: 1px solid #3d3d3d;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: var(--header);
 }
 
 #card-text {
   padding: 15px;
+}
+
+#card-row {
+  display:flex;
+  flex-direction: row;
+}
+
+#cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 5px;
+}
+
+#view-all a {
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--link);
+}
+
+#view-all a,
+h3 a {
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--link);
+}
+
+footer {
+  background-color: var(--footer);
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding: 10px 10px;
+  color: white;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--header);
+  padding: 10px;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+#header-left,
+#header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button {
+  background-color: rgb(22, 22, 22);
+  border-color: rgb(22, 22, 22);
+  color: white;
+}
+
+#header-btn {
+  height: 25px;
+  font-size: 15px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  transition: 0.2s;
+}
+
+.icon-btn.moon:hover {
+  color: #4da3ff;
+}
+
+.icon-btn.sun:hover {
+  color: #ffd54a;
+}
+
+.icon-btn svg {
+  transition: 0.2s;
+}
+
+.icon-btn:hover svg {
+  transform: scale(1.1);
 }
