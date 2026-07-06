@@ -1,39 +1,9 @@
 import { Link } from 'react-router-dom'
-import { Moon, Sun } from 'lucide-react'
-import { useState, useEffect } from "react"; import '../index.css'
+import '../index.css'
 
-function App() {
-    const [darkMode, setDarkMode] = useState(true);
-
-    useEffect(() => {
-        document.body.className = darkMode ? "dark" : "light";
-    }, [darkMode]);
-
-    const toggleTheme = () => {
-        setDarkMode(prev => !prev);
-    };
-
+function Main_Page() {
     return (
         <>
-            <header>
-                <section id="header-left">
-                    <h3>made with &lt;3 by mzums</h3>
-                </section>
-                <section id="header-right">
-                    <a id="header-btn" href="https://github.com/mzums/fakewiki/pulls" target="_blank" rel="noreferrer">
-                        contribute
-                    </a>
-                    <a id="header-btn" href="https://github.com/mzums/fakewiki" target="_blank" rel="noreferrer">
-                        GitHub
-                    </a>
-                    <button
-                        onClick={toggleTheme}
-                        className={`icon-btn ${darkMode ? "moon" : "sun"}`}
-                    >
-                        {darkMode ? <Moon /> : <Sun />}
-                    </button>
-                </section>
-            </header>
             <section id="welcome">
                 <h1>Welcome to <a href="https://github.com/mzums/fakewiki">FakeWiki</a>,</h1>
                 <h3>the fake encyclopedia maintained by <a href="https://mzums.com">mzums</a></h3>
@@ -43,7 +13,6 @@ function App() {
                 </h3>
                 <h3>Learn more</h3>
             </section>
-
 
             <h4 id="view-all">
                 view  <Link to="/All_Articles">all articles...</Link>
@@ -57,7 +26,6 @@ function App() {
                         </section>
                         <p id="card-text">
                             The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
-
                         </p>
                     </section>
 
@@ -67,11 +35,9 @@ function App() {
                         </section>
                         <p id="card-text">
                             The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
-
                         </p>
                     </section>
                 </section>
-
 
                 <section id="card-row">
                     <section id="card">
@@ -80,7 +46,6 @@ function App() {
                         </section>
                         <p id="card-text">
                             The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
-
                         </p>
                     </section>
 
@@ -90,18 +55,12 @@ function App() {
                         </section>
                         <p id="card-text">
                             The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
-
                         </p>
                     </section>
                 </section>
-
             </section>
-
-            <footer>
-                <p>Note that all information on this page is fictional and this project was created for educational purposes only.</p>
-            </footer>
         </>
     )
 }
 
-export default App
+export default Main_Page
