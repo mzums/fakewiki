@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+from dataclasses import dataclass
 import tiktoken
 import sys
 import os
+import re
 
 # ============================================
 # 1. Model definitions (must match training)
 # ============================================
-from dataclasses import dataclass
-import torch.nn as nn
+
 
 class CausalSelfAttention(nn.Module):
     def __init__(self, config):
@@ -102,108 +104,119 @@ class GPT(nn.Module):
 # ============================================
 # 2. LOADING CHECKPOINT
 # ============================================
-print("Loading model from: model_final.pt")
-print("This may take a moment...")
 
-checkpoint = torch.load("model_final.pt", map_location='cpu', weights_only=False)
+def load_checkpoint():
+    print("Loading model from: model_final2.pt")
+    print("This may take a moment...")
 
-print("\nCheckpoint contents:")
-print("  Keys:", list(checkpoint.keys()))
+    checkpoint = torch.load("model_final2.pt", map_location='cpu', weights_only=False)
 
-cfg = checkpoint.get('config')
-if cfg is None:
-    print("  Warning: 'config' not found - using default")
-    cfg = GPTConfig()
-else:
-    print(f"  Config: n_layer={cfg.n_layer}, n_emb={cfg.n_emb}, vocab={cfg.vocab_size}")
+    print("\nCheckpoint contents:")
+    print("  Keys:", list(checkpoint.keys()))
 
-state_dict = checkpoint['model_state_dict']
-
-# Check for prefixes
-keys_sample = list(state_dict.keys())[:5]
-print(f"\n  Sample keys in state dict:")
-for k in keys_sample:
-    print(f"    {k}")
-
-# Remove 'module.' and '_orig_mod.' prefixes
-new_state_dict = {}
-for k, v in state_dict.items():
-    if k.startswith('module.'):
-        k = k[7:]
-    if k.startswith('_orig_mod.'):
-        k = k[9:]
-    if k.startswith('.'):
-        k = k[1:]
-    new_state_dict[k] = v
-state_dict = new_state_dict
-print("  Removed 'module.' and '_orig_mod.' prefixes if present")
-
-# ============================================
-# 3. CREATE MODEL AND LOAD WEIGHTS
-# ============================================
-print("\nCreating model...")
-model = GPT(cfg)
-model.eval()
-
-model_keys = set(model.state_dict().keys())
-loaded_keys = set(state_dict.keys())
-print(f"Model keys: {len(model_keys)}")
-print(f"Loaded keys: {len(loaded_keys)}")
-if model_keys != loaded_keys:
-    print("Differences:")
-    print("  Missing in loaded:", model_keys - loaded_keys)
-    print("  Extra in loaded:", loaded_keys - model_keys)
-else:
-    print("All keys match!")
+    return checkpoint
 
 
-try:
-    model.load_state_dict(state_dict, strict=True)
-    print("Weights loaded successfully (strict=True)")
-except RuntimeError as e:
-    print(f"\nError with strict=True: {str(e)[:300]}...")
-    print("\nAttempting with strict=False (ignoring missing/unexpected keys)...")
-    missing, unexpected = model.load_state_dict(state_dict, strict=False)
-    if missing:
-        print(f"  Missing keys: {len(missing)}")
-        if len(missing) <= 10:
-            print("  Examples:", missing[:5])
-    if unexpected:
-        print(f"  Unexpected keys: {len(unexpected)}")
-        if len(unexpected) <= 10:
-            print("  Examples:", unexpected[:5])
-    print("Weights loaded with strict=False")
+def get_cfg(checkpoint):
+    cfg = checkpoint.get('config')
+    if cfg is None:
+        print("  Warning: 'config' not found - using default")
+        cfg = GPTConfig()
+    else:
+        print(f"  Config: n_layer={cfg.n_layer}, n_emb={cfg.n_emb}, vocab={cfg.vocab_size}")
 
-# ============================================
-# 4. MOVE TO DEVICE
-# ============================================
-device = "cuda" if torch.cuda.is_available() else "cpu"
-try:
-    model = model.to(device)
-    print(f"Model moved to {device}")
-except RuntimeError as e:
-    print(f"Failed to move to GPU: {e}")
-    device = "cpu"
-    model = model.cpu()
+    return cfg
+
+def get_state_dict(checkpoint):
+    state_dict = checkpoint['model_state_dict']
+
+    # Check for prefixes
+    keys_sample = list(state_dict.keys())[:5]
+    print(f"\n  Sample keys in state dict:")
+    for k in keys_sample:
+        print(f"    {k}")
+
+    # Remove 'module.' and '_orig_mod.' prefixes
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith('module.'):
+            k = k[7:]
+        if k.startswith('_orig_mod.'):
+            k = k[9:]
+        if k.startswith('.'):
+            k = k[1:]
+        new_state_dict[k] = v
+    state_dict = new_state_dict
+    print("  Removed 'module.' and '_orig_mod.' prefixes if present")
+    return state_dict
+
+def check_eval_keys(model, state_dict):
+    model_keys = set(model.state_dict().keys())
+    loaded_keys = set(state_dict.keys())
+    print(f"Model keys: {len(model_keys)}")
+    print(f"Loaded keys: {len(loaded_keys)}")
+    if model_keys != loaded_keys:
+        print("Differences:")
+        print("  Missing in loaded:", model_keys - loaded_keys)
+        print("  Extra in loaded:", loaded_keys - model_keys)
+    else:
+        print("All keys match!")
+
+    try:
+        model.load_state_dict(state_dict, strict=True)
+        print("Weights loaded successfully (strict=True)")
+    except RuntimeError as e:
+        print(f"\nError with strict=True: {str(e)[:300]}...")
+        print("\nAttempting with strict=False (ignoring missing/unexpected keys)...")
+        missing, unexpected = model.load_state_dict(state_dict, strict=False)
+        if missing:
+            print(f"  Missing keys: {len(missing)}")
+            if len(missing) <= 10:
+                print("  Examples:", missing[:5])
+        if unexpected:
+            print(f"  Unexpected keys: {len(unexpected)}")
+            if len(unexpected) <= 10:
+                print("  Examples:", unexpected[:5])
+        print("Weights loaded with strict=False")
+
 
 # ============================================
 # 5. GENERATION
 # ============================================
-enc = tiktoken.get_encoding('gpt2')
 
-def generate_text(prompt, max_new_tokens=200, temperature=0.0, top_k=1):
+def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, top_k=50, 
+                  frequency_penalty=0.5, presence_penalty=0.3, eos_penalty=10.0):
+    model.eval()
+    enc = tiktoken.get_encoding('gpt2')
     prompt_tokens = enc.encode(prompt)
     x = torch.tensor(prompt_tokens, dtype=torch.long, device=device).unsqueeze(0)
     generated = []
-    
+    token_counts = {}
+    eos_token_id = 50256
+
     with torch.inference_mode():
         for _ in range(max_new_tokens):
-            if x.size(1) > cfg.block_size:
-                x = x[:, -cfg.block_size:]
-            
+            if x.size(1) > config.block_size:
+                x = x[:, -config.block_size:]
             logits, _ = model(x)
             logits = logits[:, -1, :]
-            
+
+            # ---------- EOS PENALTY ----------
+            if eos_penalty > 0:
+                logits[0, eos_token_id] -= eos_penalty
+            # -----------------------------------------
+
+            # ---------- KARY ZA POWTARZANIE ----------
+            if frequency_penalty > 0 or presence_penalty > 0:
+                penalty = torch.zeros_like(logits)
+                for token, count in token_counts.items():
+                    if frequency_penalty > 0:
+                        penalty[0, token] -= frequency_penalty * count
+                    if presence_penalty > 0:
+                        penalty[0, token] -= presence_penalty
+                logits = logits + penalty
+            # -----------------------------------------
+
             if temperature > 0:
                 probs = F.softmax(logits / temperature, dim=-1)
                 if top_k is not None:
@@ -214,36 +227,74 @@ def generate_text(prompt, max_new_tokens=200, temperature=0.0, top_k=1):
                     xcol = torch.multinomial(probs, 1)
             else:
                 xcol = logits.argmax(dim=-1, keepdim=True)
-            
-            if xcol.item() == 50256:  # EOS token
-                print("EOS token encountered - stopping generation")
+
+            if xcol.item() == eos_token_id:
                 break
-            
+
+            token_id = xcol.item()
+            token_counts[token_id] = token_counts.get(token_id, 0) + 1
+
             x = torch.cat((x, xcol), dim=1)
-            generated.append(xcol.item())
-    
-    print(f"Generated {len(generated)} tokens (max_new_tokens={max_new_tokens})")
+            generated.append(token_id)
+
+    model.train()
     full_tokens = prompt_tokens + generated
     return enc.decode(full_tokens)
+
 
 # ============================================
 # 6. TEST
 # ============================================
-print("\n" + "="*60)
-print("GENERATION")
-print("="*60)
 
-prompts = [
-    "TITLE: Albert Einstein",
-]
+def gen_and_print(model):
 
-for p in prompts:    
-    print(f"\nPROMPT: {p}")
-    print("-"*40)
+    print("\n" + "="*60)
+    print("GENERATION")
+    print("="*60)
+
+    prompts = [
+        "TITLE: Game of Thrones",
+        "TITLE: 404.php"
+    ]
+
+    for prompt in prompts:    
+        print(f"\nPROMPT: {prompt}")
+        print("-"*40)
+        try:
+            output = generate_text(
+                model, 
+                prompt, 
+                cfg, 
+                max_new_tokens=800, 
+                temperature=0.8, 
+                top_k=50,
+                frequency_penalty=0.2,
+                presence_penalty=0.1
+            )
+            print(output)
+        except Exception as e:
+            print(f"Error: {e}")
+        print("-"*40)
+        print()
+
+if __name__ == "__main__":
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    checkpoint = load_checkpoint()
+    cfg = get_cfg(checkpoint)
+    state_dict = get_state_dict(checkpoint)
+    print("\nCreating model...")
+    model = GPT(cfg)
+    model.eval()
+
     try:
-        output = generate_text(p, max_new_tokens=1000, temperature=0.6, top_k=15)
-        print(output)
-    except Exception as e:
-        print(f"Error: {e}")
-    print("-"*40)
-    print()
+        model = model.to(device)
+        print(f"Model moved to {device}")
+    except RuntimeError as e:
+        print(f"Failed to move to GPU: {e}")
+        device = "cpu"
+        model = model.cpu()
+
+    check_eval_keys(model, state_dict)
+    
+    gen_and_print(model)
