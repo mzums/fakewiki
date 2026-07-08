@@ -1,31 +1,66 @@
-import { useEffect, useState } from "react";
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
+interface ArticleData {
+    title: string;
+    sections?: Record<string, string>;
+}
 
-function All_Articles() {
-    const [lines, setLines] = useState<string[]>([]);
+function AllArticles() {
+    const [articles, setArticles] = useState<ArticleData[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetch("/a.txt")
-            .then(response => response.text())
-            .then(text => setLines(text.split("\n")));
+        const fetchArticles = async () => {
+            try {
+                const response = await fetch('/b.txt');
+                if (!response.ok) throw new Error('Error loading file');
+
+                const text = await response.text();
+                let data: ArticleData[] = [];
+
+                try {
+                    const parsed = JSON.parse(text);
+                    if (Array.isArray(parsed)) {
+                        data = parsed;
+                    } else if (parsed && typeof parsed === 'object' && 'title' in parsed) {
+                        data = [parsed as ArticleData];
+                    } else {
+                        throw new Error('Unexpected format');
+                    }
+                } catch {
+                    data = text
+                        .split('\n')
+                        .filter(line => line.trim() !== '')
+                        .map(line => JSON.parse(line) as ArticleData);
+                }
+
+                setArticles(data);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchArticles();
     }, []);
 
-    return (
-        <>
-            <h1 className="article-title">
-                List of all articles
-            </h1>
-            <ul>
-                {lines.map((line, index) => (
+    if (loading) return <div>Loading article list...</div>;
+    if (error) return <div style={{ color: 'red' }}>Błąd: {error}</div>;
 
-                    <li key={index}>
-                        <Link to="/All_Articles">{line}</Link>
-                    </li>
-                ))}
-            </ul>
-        </>
+    return (
+        <ul>
+            {articles.map((article, index) => (
+                <li key={index}>
+                    <Link to={`/Article2/${article.title}`}>
+                        {article.title}
+                    </Link>
+                </li>
+            ))}
+        </ul>
     );
 }
 
-export default All_Articles;
+export default AllArticles;
