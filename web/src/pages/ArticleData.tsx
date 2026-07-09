@@ -36,7 +36,7 @@ function HomePage() {
         <ul>
             {articles.map((article, index) => (
                 <li key={index}>
-                    <Link to={`/Article2/${encodeURIComponent(article.title)}`}>
+                    <Link to={`/Article/${encodeURIComponent(article.title)}`}>
                         {article.title}
                     </Link>
                 </li>

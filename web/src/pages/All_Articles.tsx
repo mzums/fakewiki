@@ -51,15 +51,18 @@ function AllArticles() {
     if (error) return <div style={{ color: 'red' }}>Błąd: {error}</div>;
 
     return (
-        <ul>
-            {articles.map((article, index) => (
-                <li key={index}>
-                    <Link to={`/Article2/${article.title}`}>
-                        {article.title}
-                    </Link>
-                </li>
-            ))}
-        </ul>
+        <div id="article-list">
+            <h1>Article List</h1>
+            <ul>
+                {articles.map((article, index) => (
+                    <li key={index}>
+                        <Link to={`/Article/${article.title}`}>
+                            {article.title}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }
 

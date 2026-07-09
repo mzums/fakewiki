@@ -7,6 +7,7 @@ import tiktoken
 import sys
 import os
 import re
+import json
 
 # ============================================
 # 1. Model definitions (must match training)
@@ -246,7 +247,7 @@ def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, to
 # 6. TEST
 # ============================================
 
-def gen_and_print(model):
+def gen_and_print(model, cfg):
 
     print("\n" + "="*60)
     print("GENERATION")
@@ -277,6 +278,64 @@ def gen_and_print(model):
         print("-"*40)
         print()
 
+
+def parse_article(title, text: str) -> dict:
+    lines = text.strip().splitlines()
+    sections = {}
+    current_section = None
+    current_content = []
+
+    for line in lines:
+        if line.startswith("## "):
+            if current_section is not None:
+                sections[current_section] = "\n".join(current_content).strip()
+            section_name = line[3:].strip()
+            current_section = section_name
+            current_content = []
+        else:
+            if current_section is not None:
+                current_content.append(line)
+
+    if current_section is not None:
+        sections[current_section] = "\n".join(current_content).strip()
+
+    return {"title": title, "sections": sections}
+
+
+def to_json(model, cfg, output_file='articles.json'):
+    file_path = 'a2.txt'
+    with open(file_path, 'r') as file:
+        titles = [line.strip() for line in file if line.strip()]
+
+    articles = []
+
+    for title in titles:
+        prompt = f"TITLE: {title}"
+        try:
+            output = generate_text(
+                model,
+                prompt,
+                cfg,
+                max_new_tokens=800,
+                temperature=0.8,
+                top_k=50,
+                frequency_penalty=0.2,
+                presence_penalty=0.1
+            )
+            parsed = parse_article(title, output)
+            if parsed["title"] and parsed["sections"]:
+                articles.append(parsed)
+            else:
+                print(f"Unable to parse for: {title}")
+        except Exception as e:
+            print(f"Error for title {title}: {e}")
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(articles, f, indent=2, ensure_ascii=False)
+
+    print(f"Saved {len(articles)} articles to file {output_file}")
+    return articles
+
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -297,4 +356,6 @@ if __name__ == "__main__":
 
     check_eval_keys(model, state_dict)
     
-    gen_and_print(model)
+    # gen_and_print(model, cfg)
+    to_json(model, cfg)
+

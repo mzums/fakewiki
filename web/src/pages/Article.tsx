@@ -1,5 +1,5 @@
-import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { useMatch } from 'react-router-dom'; // useParams didn't work
 
 interface ArticleData {
     title: string;
@@ -7,7 +7,9 @@ interface ArticleData {
 }
 
 function Article() {
-    const { title } = useParams<{ title: string }>();
+    const match = useMatch('/Article/:title');
+    const title = match?.params.title;
+
     const [article, setArticle] = useState<ArticleData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ function Article() {
     }, [title]);
 
     if (loading) return <div>Loading articles...</div>;
-    if (error) return <div style={{ color: 'red' }}>Błąd: {error}</div>;
+    if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
     if (!article) return <div>Article not found.</div>;
 
     return (
