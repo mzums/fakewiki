@@ -207,7 +207,7 @@ def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, to
                 logits[0, eos_token_id] -= eos_penalty
             # -----------------------------------------
 
-            # ---------- KARY ZA POWTARZANIE ----------
+            # ---------- REPETITION PENALTIES ----------
             if frequency_penalty > 0 or presence_penalty > 0:
                 penalty = torch.zeros_like(logits)
                 for token, count in token_counts.items():
@@ -303,12 +303,13 @@ def parse_article(title, text: str) -> dict:
 
 
 def to_json(model, cfg, output_file='articles.json'):
-    file_path = 'a2.txt'
+    file_path = 'a.txt'
     with open(file_path, 'r') as file:
         titles = [line.strip() for line in file if line.strip()]
 
     articles = []
 
+    cnt = 0
     for title in titles:
         prompt = f"TITLE: {title}"
         try:
@@ -326,9 +327,13 @@ def to_json(model, cfg, output_file='articles.json'):
             if parsed["title"] and parsed["sections"]:
                 articles.append(parsed)
             else:
-                print(f"Unable to parse for: {title}")
+                print(f"Unable to parse for: {title}, trying again later")
+                titles.append(title)
         except Exception as e:
             print(f"Error for title {title}: {e}")
+        cnt += 1
+        if cnt % 10 == 0:
+            print(f"{cnt}/{len(titles)} done")
 
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(articles, f, indent=2, ensure_ascii=False)
@@ -356,6 +361,6 @@ if __name__ == "__main__":
 
     check_eval_keys(model, state_dict)
     
-    # gen_and_print(model, cfg)
-    to_json(model, cfg)
+    gen_and_print(model, cfg)
+    #to_json(model, cfg)
 

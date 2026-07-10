@@ -23,7 +23,7 @@ function Article() {
             }
 
             try {
-                const response = await fetch('/b.txt');
+                const response = await fetch('/articles.json');
                 if (!response.ok) throw new Error('Error loading file');
 
                 const text = await response.text();
@@ -67,16 +67,38 @@ function Article() {
     if (!article) return <div>Article not found.</div>;
 
     return (
-        <>
-            <h1>{article.title}</h1>
-            {article.sections &&
-                Object.entries(article.sections).map(([key, content]) => (
-                    <div key={key}>
-                        <h2>{key}</h2>
-                        <p>{content}</p>
-                    </div>
-                ))}
-        </>
+        <div id="article-page">
+            <div id="content">
+                <h3>Contents:</h3>
+                <ul>
+                    {article.sections &&
+                        Object.entries(article.sections).map(([key, _]) => (
+                            <li key={key}>{key}</li>
+                        ))}
+                </ul>
+            </div>
+
+            <div id="article-text">
+                <div className="image-frame">
+                    <div className="image-caption">{title}</div>
+                    <img
+                        src="/image.png"
+                        alt="Image"
+                    />
+                    <img id="article-img" src="../public/fake2.png" />
+                </div>
+
+                <h1>{article.title}</h1>
+
+                {article.sections &&
+                    Object.entries(article.sections).map(([key, content]) => (
+                        <div key={key}>
+                            <h2>{key}</h2>
+                            <p>{content}</p>
+                        </div>
+                    ))}
+            </div>
+        </div>
     );
 }
 

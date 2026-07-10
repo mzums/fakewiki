@@ -1,5 +1,5 @@
 body.dark {
-  --bg: #1d1d1d;
+  --bg: #111111;
   --text: white;
   --card: #2a2a2a;
   --border: #3d3d3d;
@@ -37,6 +37,19 @@ body {
   gap: 6px;
   margin-top: 50px;
   margin-bottom: 20px;
+}
+
+.main-container {
+  display: flex;
+  justify-content: center;
+}
+
+#main-img {
+  position: absolute;
+  left: -10px;
+  margin-top: 80px;
+  transform: translateY(-50%);
+  width: 250px;
 }
 
 h1 {
@@ -221,4 +234,36 @@ li {
 #article-list {
   margin-left: 50px;
   margin-top: 30px;
+}
+
+.image-frame {
+  float: right;
+  width: 200px;
+  margin: 0 0 10px 20px;
+
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: center;
+}
+
+.image-caption {
+  font-size: 14px;
+  font-weight: bold;
+  padding-bottom: 6px;
+}
+
+.image-frame img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#article-img {
+  margin-top: -120px;
+  transform: translateY(-50%) translateX(-30px);
+  width: 250px;
+}
+
+b {
+  font-weight: 700;
 }

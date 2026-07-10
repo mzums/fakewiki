@@ -20,7 +20,7 @@ function Layout() {
                 </section>
                 <section id="header-right">
                     <a id="header-btn" href="https://github.com/mzums/fakewiki/pulls" target="_blank" rel="noreferrer">
-                        contribute
+                        Contribute
                     </a>
                     <a id="header-btn" href="https://github.com/mzums/fakewiki" target="_blank" rel="noreferrer">
                         GitHub
@@ -39,7 +39,7 @@ function Layout() {
             </main>
 
             <footer>
-                <p>Note that all information on this page is fictional and this project was created for educational purposes only.</p>
+                <p>Note that <b>all information on this page is fictional</b> and this project was created for educational purposes only.</p>
             </footer>
 
         </>

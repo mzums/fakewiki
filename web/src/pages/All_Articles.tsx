@@ -14,7 +14,7 @@ function AllArticles() {
     useEffect(() => {
         const fetchArticles = async () => {
             try {
-                const response = await fetch('/b.txt');
+                const response = await fetch('/articles.json');
                 if (!response.ok) throw new Error('Error loading file');
 
                 const text = await response.text();
