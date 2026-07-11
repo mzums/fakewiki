@@ -3,7 +3,7 @@ body.dark {
   --text: white;
   --card: #2a2a2a;
   --border: #3d3d3d;
-  --link: rgb(0, 195, 255);
+  --link: rgb(0, 110, 255);
   --footer: #501111;
 }
 
@@ -81,7 +81,6 @@ p {
 }
 
 #card {
-  margin: 5px;
   width: 600px;
   border: 1px solid var(--border);
   width: 100%;
@@ -109,7 +108,8 @@ p {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: 5px;
+  align-items: center;
+  margin-bottom: 100px;
 }
 
 #view-all a {
@@ -199,7 +199,8 @@ button {
 }
 
 a {
-  color: var(--link)
+  color: var(--link);
+  font-weight: 500;
 }
 
 h2 {
@@ -211,6 +212,7 @@ h2 {
   display: flex;
   flex-direction: row;
   gap: 50px;
+  margin-bottom: 50px;
 }
 
 #content {
@@ -224,6 +226,7 @@ h2 {
   margin-top: 50px;
   width: 70vw;
   font-weight: 300;
+  margin-bottom: 150px;
 }
 
 li {
@@ -241,7 +244,7 @@ li {
   width: 200px;
   margin: 0 0 10px 20px;
 
-  border: 1px solid var(--border);
+  border: 1px solid rgb(73, 73, 73);
   padding: 8px;
   text-align: center;
 }
@@ -259,11 +262,75 @@ li {
 }
 
 #article-img {
-  margin-top: -120px;
-  transform: translateY(-50%) translateX(-30px);
-  width: 250px;
+  width: 200px;
 }
 
 b {
   font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  #main-img {
+    display: none;
+  }
+
+  #welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 50px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  #card-row {
+    display:flex;
+    flex-direction: column;
+    width: 100vw;
+    align-items: center;
+  }
+
+  #content {
+    display: none;
+  }
+
+  #article-page {
+    width: 100%;
+    align-items: center;
+  }
+
+  #article-text {
+    margin-top: 50px;
+    width: 80%;
+    font-weight: 300;
+    margin-bottom: 150px;
+    margin: 10px;
+  }
+
+  .image-frame {
+    float: none; 
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    margin: 10px 0;
+    padding: 0;
+    border: none;
+  }
+
+  .image-caption {
+    display: none;
+  }
+
+  #article-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  #card {
+    width: 95%;
+  }
 }
