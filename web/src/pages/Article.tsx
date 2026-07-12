@@ -50,7 +50,7 @@ function Article() {
                 if (found) {
                     setArticle(found);
                 } else {
-                    setError(`Idn't find article with title: "${title}"`);
+                    setError(`Didn't find article with title: "${title}"`);
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
@@ -81,14 +81,10 @@ function Article() {
             <div id="article-text">
                 <div className="image-frame">
                     <div className="image-caption">{title}</div>
-                    <img id="article-img"
-                        src="/image.png"
-                        alt="Image"
-                    />
+                    <img id="article-img" src="/image.png" alt="Image" />
                 </div>
 
                 <h1>{article.title}</h1>
-
                 {article.sections &&
                     Object.entries(article.sections).map(([key, content]) => (
                         <div key={key}>

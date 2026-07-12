@@ -37,6 +37,10 @@ body {
   gap: 6px;
   margin-top: 50px;
   margin-bottom: 20px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .main-container {
@@ -47,9 +51,9 @@ body {
 #main-img {
   position: absolute;
   left: -10px;
-  margin-top: 80px;
+  margin-top: 60px;
   transform: translateY(-50%);
-  width: 250px;
+  width: 30%;
 }
 
 h1 {
@@ -81,7 +85,6 @@ p {
 }
 
 #card {
-  width: 600px;
   border: 1px solid var(--border);
   width: 100%;
 }
@@ -101,7 +104,7 @@ p {
 #card-row {
   display:flex;
   flex-direction: row;
-  width: 100vw;
+  width: 90%;
 }
 
 #cards {
@@ -219,12 +222,11 @@ h2 {
   margin-top: 100px;
   margin-left: 10px;
   align-content: left;
-  width: 150px;
 }
 
 #article-text {
   margin-top: 50px;
-  width: 70vw;
+  width: 70%;
   font-weight: 300;
   margin-bottom: 150px;
 }
@@ -243,7 +245,6 @@ li {
   float: right;
   width: 200px;
   margin: 0 0 10px 20px;
-
   border: 1px solid rgb(73, 73, 73);
   padding: 8px;
   text-align: center;
@@ -262,7 +263,7 @@ li {
 }
 
 #article-img {
-  width: 200px;
+  width: 100%;
 }
 
 b {
@@ -296,26 +297,26 @@ b {
   }
 
   #article-page {
-    width: 100%;
-    align-items: center;
+    padding: 0;
   }
 
   #article-text {
-    margin-top: 50px;
-    width: 80%;
-    font-weight: 300;
-    margin-bottom: 150px;
-    margin: 10px;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding: 0;
+    box-sizing: border-box;
   }
 
   .image-frame {
-    float: none; 
     width: 100%;
     height: 200px;
-    overflow: hidden;
-    margin: 10px 0;
     padding: 0;
     border: none;
+    border-radius: 0;
+    margin: 0;
+    margin-bottom: 30px;
   }
 
   .image-caption {
@@ -330,7 +331,18 @@ b {
     display: block;
   }
 
+  #article-text h1,
+  #article-text h2,
+  #article-text p {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
   #card {
     width: 95%;
+  }
+
+  #header-left {
+    display: none;
   }
 }

@@ -48,7 +48,7 @@ function AllArticles() {
     }, []);
 
     if (loading) return <div>Loading article list...</div>;
-    if (error) return <div style={{ color: 'red' }}>Błąd: {error}</div>;
+    if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
 
     return (
         <div id="article-list">

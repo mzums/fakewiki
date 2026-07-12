@@ -1,7 +1,9 @@
-useful datasets:
+# FakeWiki
 
-- https://dumps.wikimedia.org/enwiki/latest/?utm_source=chatgpt.com (enwiki-latest-pages-articles.xml.bz2)
-- https://www.kaggle.com/datasets/conjuring92/wiki-stem-corpus
+The goal of this project was to create a model that mimics the style of Wikipedia's articles. It was achived by building a GPT2-like transformer.  
+Generated articles are placed on a Wikipedia-like website.
+
+## The model
 
 **decode-only transformer**
 
@@ -35,3 +37,24 @@ Roadmap:
 
 ![alt text](image.png)
 _from https://medium.com/@vipul.koti333/from-theory-to-code-step-by-step-implementation-and-code-breakdown-of-gpt-2-model-7bde8d5cecda_
+
+## Tokenization
+
+I used GPT-2 tokenizer although this repo also contains my experiments with building a custom tokenizer ([tokenization.ipynb](dev/tokenization.ipynb) and [my_tokenizer.py](dev/my_tokenizer.py))
+
+## Results
+
+The model was trained on RTX 4060Ti 16GB on 4GB of data  
+Starting from loss ~ 11 it reached loss ~ 2,86 after 20000 steps of training
+
+## Weaknesses of the model
+
+- The model naturally repeats some phrases. This can be later eliminated in generation (I am using `frequency_penalty=0.2` and `presence_penalty=0.1`, higher values ​​caused the model to generate fewer article sections)
+- The model does not have reasonable world knowledge
+- The model does not generate lists (due to absence of lists in training data)
+
+## Dataset
+
+The model was trained on Wikipedia articles from https://dumps.wikimedia.org/enwiki/latest (enwiki-latest-pages-articles.xml.bz2).  
+After the initial training it became clear that there is an overrepresentation of articles related to sports on Wikipedia so I filtered _Wanted article titles_, mostly referring to STEM (that must occur in my dataset) and _Unwanted articles_, mostly related to sports (that mustn't occur) and also some random articles so that they sum to 1.500.000 using [Petscan](https://petscan.wmcloud.org/).  
+[Read more...](data_preparation.md)

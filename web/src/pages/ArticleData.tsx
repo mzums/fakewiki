@@ -29,7 +29,7 @@ function HomePage() {
         fetchArticles();
     }, []);
 
-    if (loading) return <div>Ładowanie...</div>;
+    if (loading) return <div>Loading...</div>;
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
     return (
