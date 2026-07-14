@@ -279,7 +279,7 @@ def gen_and_print(model, cfg):
         print()
 
 
-def parse_article(title, text: str) -> dict:
+def parse_article(title, text: str, cnt) -> dict:
     lines = text.strip().splitlines()
     sections = {}
     current_section = None
@@ -299,7 +299,7 @@ def parse_article(title, text: str) -> dict:
     if current_section is not None:
         sections[current_section] = "\n".join(current_content).strip()
 
-    return {"title": title, "sections": sections}
+    return {"title": title, "id": cnt, "sections": sections}
 
 
 def to_json(model, cfg, output_file='articles.json'):
@@ -311,27 +311,27 @@ def to_json(model, cfg, output_file='articles.json'):
 
     cnt = 0
     for title in titles:
-        prompt = f"TITLE: {title}"
+        prompt = f"TITLE: {title}\n\n## Abstract\n{title}"
         try:
             output = generate_text(
                 model,
                 prompt,
                 cfg,
                 max_new_tokens=800,
-                temperature=0.8,
+                temperature=0.6,
                 top_k=50,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
             )
-            parsed = parse_article(title, output)
+            parsed = parse_article(title, output, cnt)
             if parsed["title"] and parsed["sections"]:
                 articles.append(parsed)
+                cnt += 1
             else:
                 print(f"Unable to parse for: {title}, trying again later")
                 titles.append(title)
         except Exception as e:
             print(f"Error for title {title}: {e}")
-        cnt += 1
         if cnt % 10 == 0:
             print(f"{cnt}/{len(titles)} done")
 
@@ -361,6 +361,6 @@ if __name__ == "__main__":
 
     check_eval_keys(model, state_dict)
     
-    gen_and_print(model, cfg)
-    #to_json(model, cfg)
+    #gen_and_print(model, cfg)
+    to_json(model, cfg)
 
