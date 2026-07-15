@@ -3,8 +3,9 @@ import numpy as np
 import os
 import time
 
-input_file = "../dev/wiki_clean.txt"
-output_file = "tokens.bin"
+#input_file = "../dev/wiki_clean.txt"
+input_file = "dyk.txt"
+output_file = "tokens_dyk.bin"
 
 total_size = os.path.getsize(input_file)
 print(f"file size: {total_size / (1024**3):.2f} GB")

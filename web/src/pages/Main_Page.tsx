@@ -1,7 +1,52 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
 import '../index.css'
 
+interface DYK_OTD_Data {
+    content: string
+}
+
 function Main_Page() {
+    const [dyk, setDyk] = useState<DYK_OTD_Data[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchDYK = async () => {
+            try {
+                const response = await fetch('/dyk.json');
+                if (!response.ok) throw new Error('Error loading file');
+
+                const text = await response.text();
+                let data: DYK_OTD_Data[] = [];
+
+                try {
+                    const parsed = JSON.parse(text);
+                    if (Array.isArray(parsed)) {
+                        data = parsed;
+                    } else if (parsed && typeof parsed === 'object' && 'title' in parsed) {
+                        data = [parsed as DYK_OTD_Data];
+                    } else {
+                        throw new Error('Unexpected format');
+                    }
+                } catch {
+                    console.log("Error parsing DYK")
+                }
+
+                setDyk(data.slice(0, 10));
+            } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDYK();
+    }, []);
+
+    if (loading) return <div>Loading article list...</div>;
+    if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
+
     return (
         <>
             <div className="main-container">
@@ -33,7 +78,7 @@ function Main_Page() {
 
                     <section id="card">
                         <section id="card-title">
-                            In the news
+                            On this day
                         </section>
                         <p id="card-text">
                             The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
@@ -44,21 +89,19 @@ function Main_Page() {
                 <section id="card-row">
                     <section id="card">
                         <section id="card-title">
-                            Did you know ...
+                            Did you know
                         </section>
                         <p id="card-text">
-                            The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
+                            <ul>
+                                {dyk.map((dyk, index) => (
+                                    <li key={index}>
+                                        {dyk.content}
+                                    </li>
+                                ))}
+                            </ul>
                         </p>
                     </section>
 
-                    <section id="card">
-                        <section id="card-title">
-                            On this day
-                        </section>
-                        <p id="card-text">
-                            The name of the computer game console and the game console is a software that combines the original system of the same name, which can be used in the computer game console. It was developed in the early 1990s by the IBM Computer Engine, and developed in 1992.
-                        </p>
-                    </section>
                 </section>
             </section>
         </>

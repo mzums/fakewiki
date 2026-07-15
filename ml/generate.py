@@ -110,7 +110,7 @@ def load_checkpoint():
     print("Loading model from: model_final2.pt")
     print("This may take a moment...")
 
-    checkpoint = torch.load("model_final2.pt", map_location='cpu', weights_only=False)
+    checkpoint = torch.load("model_dyk.pt", map_location='cpu', weights_only=False)
 
     print("\nCheckpoint contents:")
     print("  Keys:", list(checkpoint.keys()))
@@ -189,6 +189,8 @@ def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, to
                   frequency_penalty=0.5, presence_penalty=0.3, eos_penalty=10.0):
     model.eval()
     enc = tiktoken.get_encoding('gpt2')
+    if prompt == "":
+        prompt = "\n"
     prompt_tokens = enc.encode(prompt)
     x = torch.tensor(prompt_tokens, dtype=torch.long, device=device).unsqueeze(0)
     generated = []
@@ -254,8 +256,8 @@ def gen_and_print(model, cfg):
     print("="*60)
 
     prompts = [
-        "TITLE: Game of Thrones",
-        "TITLE: 404.php"
+        "",
+        ""
     ]
 
     for prompt in prompts:    
@@ -302,6 +304,9 @@ def parse_article(title, text: str, cnt) -> dict:
     return {"title": title, "id": cnt, "sections": sections}
 
 
+def parse_other(text: str, cnt):
+    return {"id": cnt, "content": text}
+
 def to_json(model, cfg, output_file='articles.json'):
     file_path = 'a.txt'
     with open(file_path, 'r') as file:
@@ -341,6 +346,37 @@ def to_json(model, cfg, output_file='articles.json'):
     print(f"Saved {len(articles)} articles to file {output_file}")
     return articles
 
+def generate_dyk(model, cfg, output_file='dyk.json'):
+    dyk = []
+    cnt = 0
+    n = 200
+    for i in range(n):
+        prompt = "... that"
+        try:
+            output = generate_text(
+                model,
+                prompt,
+                cfg,
+                max_new_tokens=800,
+                temperature=0.6,
+                top_k=50,
+                frequency_penalty=0.2,
+                presence_penalty=0.1
+            )
+            parsed = parse_other(output, cnt)
+            dyk.append(parsed)
+            cnt += 1
+        except Exception as e:
+            print(f"Error for dyk number {cnt}: {e}")
+        if cnt % 10 == 0:
+            print(f"{cnt}/{n} done")
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(dyk, f, indent=2, ensure_ascii=False)
+
+    print(f"Saved {n} dyk to file {output_file}")
+    return dyk
+
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -362,5 +398,6 @@ if __name__ == "__main__":
     check_eval_keys(model, state_dict)
     
     #gen_and_print(model, cfg)
-    to_json(model, cfg)
+    #to_json(model, cfg)
+    generate_dyk(model, cfg)
 
