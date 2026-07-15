@@ -1,4 +1,7 @@
 import torch
+import torch.nn as nn
+from torch.nn import functional as F
+from dataclasses import dataclass
 import math
 from dataclasses import dataclass
 import numpy as np
@@ -7,12 +10,6 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 
-
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-import math
-from dataclasses import dataclass
 
 class CausalSelfAttention(nn.Module):
     def __init__(self, config):
@@ -130,7 +127,7 @@ class GPT(nn.Module):
     
 
 class DataLoaderLite:
-    def __init__(self, B, T, process_rank, num_processes, token_file="tokens_dyk.bin", 
+    def __init__(self, B, T, process_rank, num_processes, token_file="tokens_otd.bin", 
                  split='train', val_frac=0.05):
         self.B = B
         self.T = T
@@ -196,7 +193,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(1337)
 torch.cuda.manual_seed(1337)
 
-B, T = 16, 1024
+B, T = 2, 1024
 total_batch_size = 131072
 ddp = False
 ddp_world_size = 1
@@ -235,7 +232,7 @@ min_lr = max_lr * 0.1   # 6e-5
 learning_rate = min_lr   # const
 optimizer = raw_model.configure_optimizers(weight_decay=0.1, learning_rate=learning_rate, device=device)
 
-extra_steps = 250
+extra_steps = 50
 
 for step in range(extra_steps):
     t0 = time.time()
@@ -266,4 +263,4 @@ for step in range(extra_steps):
 torch.save({
     'model_state_dict': raw_model.state_dict(),
     'config': config
-}, "model_dyk.pt")
+}, "model_otd.pt")

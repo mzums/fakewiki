@@ -8,6 +8,7 @@ import sys
 import os
 import re
 import json
+import random
 
 # ============================================
 # 1. Model definitions (must match training)
@@ -110,7 +111,7 @@ def load_checkpoint():
     print("Loading model from: model_final2.pt")
     print("This may take a moment...")
 
-    checkpoint = torch.load("model_dyk.pt", map_location='cpu', weights_only=False)
+    checkpoint = torch.load("model_otd.pt", map_location='cpu', weights_only=False)
 
     print("\nCheckpoint contents:")
     print("  Keys:", list(checkpoint.keys()))
@@ -377,6 +378,39 @@ def generate_dyk(model, cfg, output_file='dyk.json'):
     print(f"Saved {n} dyk to file {output_file}")
     return dyk
 
+def generate_otd(model, cfg, output_file='otd.json'):
+    otd = []
+    cnt = 0
+    n = 200
+    for i in range(n):
+        nums = range(1, 2026)
+        picked = random.choices(nums, weights=nums, k=1)[0]
+        prompt = f"{picked} - "
+        try:
+            output = generate_text(
+                model,
+                prompt,
+                cfg,
+                max_new_tokens=800,
+                temperature=0.6,
+                top_k=50,
+                frequency_penalty=0.2,
+                presence_penalty=0.1
+            )
+            parsed = parse_other(output, cnt)
+            otd.append(parsed)
+            cnt += 1
+        except Exception as e:
+            print(f"Error for dyk number {cnt}: {e}")
+        if cnt % 10 == 0:
+            print(f"{cnt}/{n} done")
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(otd, f, indent=2, ensure_ascii=False)
+
+    print(f"Saved {n} otd to file {output_file}")
+    return otd
+
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -399,5 +433,6 @@ if __name__ == "__main__":
     
     #gen_and_print(model, cfg)
     #to_json(model, cfg)
-    generate_dyk(model, cfg)
+    #generate_dyk(model, cfg)
+    generate_otd(model, cfg)
 

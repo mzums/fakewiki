@@ -4,8 +4,8 @@ import os
 import time
 
 #input_file = "../dev/wiki_clean.txt"
-input_file = "dyk.txt"
-output_file = "tokens_dyk.bin"
+input_file = "otd.txt"
+output_file = "tokens_otd.bin"
 
 total_size = os.path.getsize(input_file)
 print(f"file size: {total_size / (1024**3):.2f} GB")
