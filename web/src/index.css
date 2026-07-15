@@ -104,6 +104,7 @@ p {
 #card-row {
   display:flex;
   flex-direction: row;
+  max-width: 1500px;
   width: 90%;
 }
 
@@ -113,6 +114,11 @@ p {
   gap: 0;
   align-items: center;
   margin-bottom: 100px;
+}
+
+#view-all {
+  margin-left: 5%;
+  font-weight: 400;
 }
 
 #view-all a {
@@ -268,6 +274,10 @@ li {
 
 b {
   font-weight: 700;
+}
+
+#article-list {
+  margin-bottom: 50px;
 }
 
 @media (max-width: 480px) {
