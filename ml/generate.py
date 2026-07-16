@@ -338,7 +338,7 @@ def to_json(model, cfg, output_file='articles.json'):
                 token_penalty_ids=[2538, 49560],      # for LE and TIT
                 token_penalty_value=20.0
             )
-            print(output)
+            #print(output)
             parsed = parse_article(title, output, cnt)
             if parsed["title"] and parsed["sections"]:
                 articles.append(parsed)

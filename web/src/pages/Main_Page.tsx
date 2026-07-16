@@ -18,40 +18,33 @@ function Main_Page() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const pickDYK = <T,>(arr: T[], seed: number, n = 10): NonNullable<T>[] => {
-            let s = seed >>> 0;
-            const rand = () => (s = (s * 1664525 + 1013904223) & 0xFFFFFFFF) / 2 ** 32;
-            const copy = [...arr];
+        function hashInt(x: number): number {
+            x = x >>> 0;
+            x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+            x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+            x = x ^ (x >>> 16);
+            return x >>> 0;
+        }
 
-            for (let i = copy.length - 1; i > 0; i--) {
-                const j = Math.floor(rand() * (i + 1));
-                [copy[i], copy[j]] = [copy[j], copy[i]];
-            }
+        const dateSeed = +new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
+        const pickDYK = <T,>(arr: T[], n = 10): NonNullable<T>[] => {
             const result: NonNullable<T>[] = [];
-            for (let i = 0; i < copy.length && result.length < n; i++) {
-                if (copy[i] != null) {
-                    result.push(copy[i] as NonNullable<T>);
-                }
+            for (let i = 0; i < n; i++) {
+                const r = hashInt(dateSeed + i) / 0xFFFFFFFF;
+                const idx = Math.floor(r * arr.length);
+                result.push(arr[idx] as NonNullable<T>);
             }
             return result;
         };
 
-        const pickArticle = (arr: any[], seed: number) => {
-            if (!arr || arr.length === 0) {
-                return { title: '', abstract: '' };
-            }
-
-            const len = typeof arr.length === 'number' ? arr.length : 0;
-            if (len === 0) {
-                return { title: '', abstract: '' };
-            }
-
-            let s = seed >>> 0;
-            const rand = () => (s = (s * 1664525 + 1013904223) & 0xFFFFFFFF) / 2 ** 32;
-
-            const index = Math.floor(rand() * len) % len;
-            let picked = arr[index];
+        const pickArticle = <T extends { title?: string; sections?: { Abstract?: string } }>(
+            arr: T[],
+            seed: number
+        ): { title: string; abstract: string } => {
+            const random = hashInt(seed) / 0xFFFFFFFF;
+            const index = Math.floor(random * arr.length);
+            const picked = arr[index];
 
             if (!picked) {
                 const fallback = arr.find(item => item != null);
@@ -66,11 +59,9 @@ function Main_Page() {
 
             return {
                 title: picked.title ?? '',
-                abstract: picked.sections?.Abstract ?? '',
+                abstract: (picked.sections?.Abstract)?.slice(0, 1000) ?? '',
             };
         };
-
-        const dateSeed = +new Date().toISOString().slice(0, 10).replace(/-/g, ''); // yyyymmdd
 
         const fetchDYK = async () => {
             try {
@@ -93,7 +84,7 @@ function Main_Page() {
                     console.log("Error parsing DYK")
                 }
 
-                const selected = pickDYK(data, dateSeed, 10);
+                const selected = pickDYK(data, 10);
                 setDyk(selected);
             } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
@@ -158,7 +149,14 @@ function Main_Page() {
                         .map(line => JSON.parse(line) as ArticleData);
                 }
 
-                setPopular(data.slice(0, 16));
+                const width = window.innerWidth;
+                let limit = 20;
+                if (width >= 1500) {
+                    limit = 30
+                }
+
+                setPopular(data.slice(0, limit));
+
             } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
             } finally {
@@ -200,7 +198,16 @@ function Main_Page() {
                             From today's featured article
                         </section>
                         {article.map((item, index) => (
-                            <p key={index} id="card-text">{item.abstract}</p>
+                            <p key={index} id="card-text">{item.abstract}
+                                <br></br>
+                                <p style={{ fontStyle: "italic" }}>
+                                    (
+                                    <Link id="full" to={`/Article/${item.title}`}>
+                                        Full article...
+                                    </Link>
+                                    )
+                                </p>
+                            </p >
                         ))}
                     </section>
 
@@ -208,9 +215,9 @@ function Main_Page() {
                         <section id="card-title">
                             Most popular
                         </section>
-                        <ul style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px' }}>
-                            {popular.map((article, _) => (
-                                <li>
+                        <ul id="popular">
+                            {popular.map((article, index) => (
+                                <li key={index}>
                                     <Link to={`/Article/${article.title}`}>
                                         {article.title}
                                     </Link>
@@ -223,7 +230,7 @@ function Main_Page() {
                 <section id="card-row">
                     <section id="card">
                         <section id="card-title">
-                            Did you know
+                            Did you know..
                         </section>
                         <ul>
                             {dyk.map((dyk, index) => (

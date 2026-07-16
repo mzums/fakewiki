@@ -118,6 +118,12 @@ p {
   width: 90%;
 }
 
+#popular {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
 #view-all {
   font-weight: 400;
   align-self: flex-start;
@@ -283,13 +289,45 @@ b {
   margin-bottom: 50px;
 }
 
+#full {
+  font-weight: 800;
+  font-style: italic;
+}
+
 @media (min-width: 1000px) {
   #main-img {
     margin-left: calc((100vw - 1000px) / 2);
   }
+
+  #cards {
+    max-width: 1500px;
+    width: 80%;
+  }
+}
+
+@media (min-width: 1500px) {
+  #popular {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 700px) {
+  #popular {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }
 
 @media (max-width: 480px) {
+  #popular {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+  }
+
   #main-img {
     display: none;
   }
