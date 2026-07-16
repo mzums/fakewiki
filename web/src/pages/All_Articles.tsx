@@ -53,7 +53,7 @@ function AllArticles() {
     return (
         <div id="article-list">
             <h1>Article List</h1>
-            <ul>
+            <ul id="list">
                 {articles.map((article, index) => (
                     <li key={index}>
                         <Link to={`/Article/${article.title}`}>
