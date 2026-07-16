@@ -111,7 +111,7 @@ def load_checkpoint():
     print("Loading model from: model_final2.pt")
     print("This may take a moment...")
 
-    checkpoint = torch.load("model_otd.pt", map_location='cpu', weights_only=False)
+    checkpoint = torch.load("model_final2.pt", map_location='cpu', weights_only=False)
 
     print("\nCheckpoint contents:")
     print("  Keys:", list(checkpoint.keys()))
@@ -187,11 +187,10 @@ def check_eval_keys(model, state_dict):
 # ============================================
 
 def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, top_k=50, 
-                  frequency_penalty=0.5, presence_penalty=0.3, eos_penalty=10.0):
+                  frequency_penalty=0.5, presence_penalty=0.3, eos_penalty=10.0,
+                  token_penalty_ids=None, token_penalty_value=5.0):
     model.eval()
     enc = tiktoken.get_encoding('gpt2')
-    if prompt == "":
-        prompt = "\n"
     prompt_tokens = enc.encode(prompt)
     x = torch.tensor(prompt_tokens, dtype=torch.long, device=device).unsqueeze(0)
     generated = []
@@ -208,8 +207,7 @@ def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, to
             # ---------- EOS PENALTY ----------
             if eos_penalty > 0:
                 logits[0, eos_token_id] -= eos_penalty
-            # -----------------------------------------
-
+            
             # ---------- REPETITION PENALTIES ----------
             if frequency_penalty > 0 or presence_penalty > 0:
                 penalty = torch.zeros_like(logits)
@@ -219,7 +217,13 @@ def generate_text(model, prompt, config, max_new_tokens=100, temperature=0.8, to
                     if presence_penalty > 0:
                         penalty[0, token] -= presence_penalty
                 logits = logits + penalty
-            # -----------------------------------------
+
+            # ---------- PENALTY ----------
+            if token_penalty_ids is not None:
+                for tid in token_penalty_ids:
+                    if 0 <= tid < logits.size(1):
+                        logits[0, tid] -= token_penalty_value
+            # -------------------------------------------------------
 
             if temperature > 0:
                 probs = F.softmax(logits / temperature, dim=-1)
@@ -257,8 +261,7 @@ def gen_and_print(model, cfg):
     print("="*60)
 
     prompts = [
-        "",
-        ""
+        "TITLE: Elizabeth II\n\n## Abstract\nElizabeth II",
     ]
 
     for prompt in prompts:    
@@ -270,10 +273,13 @@ def gen_and_print(model, cfg):
                 prompt, 
                 cfg, 
                 max_new_tokens=800, 
-                temperature=0.8, 
+                temperature=0.6, 
                 top_k=50,
-                frequency_penalty=0.2,
-                presence_penalty=0.1
+                frequency_penalty=0.4,
+                presence_penalty=0.3,
+                eos_penalty=10.0,
+                token_penalty_ids=[2538],
+                token_penalty_value=20.0
             )
             print(output)
         except Exception as e:
@@ -290,16 +296,17 @@ def parse_article(title, text: str, cnt) -> dict:
 
     for line in lines:
         if line.startswith("## "):
-            if current_section is not None:
+            if current_section is not None and current_section not in sections:
                 sections[current_section] = "\n".join(current_content).strip()
+            
             section_name = line[3:].strip()
             current_section = section_name
             current_content = []
         else:
-            if current_section is not None:
+            if current_section is not None and current_section not in sections:
                 current_content.append(line)
 
-    if current_section is not None:
+    if current_section is not None and current_section not in sections:
         sections[current_section] = "\n".join(current_content).strip()
 
     return {"title": title, "id": cnt, "sections": sections}
@@ -327,8 +334,11 @@ def to_json(model, cfg, output_file='articles.json'):
                 temperature=0.6,
                 top_k=50,
                 frequency_penalty=0.2,
-                presence_penalty=0.1
+                presence_penalty=0.1,
+                token_penalty_ids=[2538, 49560],      # for LE and TIT
+                token_penalty_value=20.0
             )
+            print(output)
             parsed = parse_article(title, output, cnt)
             if parsed["title"] and parsed["sections"]:
                 articles.append(parsed)
@@ -364,6 +374,7 @@ def generate_dyk(model, cfg, output_file='dyk.json'):
                 frequency_penalty=0.2,
                 presence_penalty=0.1
             )
+            print(output)
             parsed = parse_other(output, cnt)
             dyk.append(parsed)
             cnt += 1
@@ -392,7 +403,7 @@ def generate_otd(model, cfg, output_file='otd.json'):
                 prompt,
                 cfg,
                 max_new_tokens=800,
-                temperature=0.6,
+                temperature=0.8,
                 top_k=50,
                 frequency_penalty=0.2,
                 presence_penalty=0.1
@@ -432,7 +443,6 @@ if __name__ == "__main__":
     check_eval_keys(model, state_dict)
     
     #gen_and_print(model, cfg)
-    #to_json(model, cfg)
+    to_json(model, cfg)
     #generate_dyk(model, cfg)
-    generate_otd(model, cfg)
-
+    #generate_otd(model, cfg)

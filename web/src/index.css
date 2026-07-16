@@ -51,8 +51,9 @@ body {
 #main-img {
   position: absolute;
   left: -10px;
-  margin-top: 60px;
+  margin-top: 80px;
   transform: translateY(-50%);
+  max-width: 250px;
   width: 30%;
 }
 
@@ -104,8 +105,7 @@ p {
 #card-row {
   display:flex;
   flex-direction: row;
-  max-width: 1500px;
-  width: 90%;
+  width: 100%;
 }
 
 #cards {
@@ -113,12 +113,15 @@ p {
   flex-direction: column;
   gap: 0;
   align-items: center;
-  margin-bottom: 100px;
+  margin: 0 auto 100px auto;
+  max-width: 1500px;
+  width: 90%;
 }
 
 #view-all {
-  margin-left: 5%;
   font-weight: 400;
+  align-self: flex-start;
+  width: 100%;
 }
 
 #view-all a {
@@ -278,6 +281,12 @@ b {
 
 #article-list {
   margin-bottom: 50px;
+}
+
+@media (min-width: 1000px) {
+  #main-img {
+    margin-left: calc((100vw - 1000px) / 2);
+  }
 }
 
 @media (max-width: 480px) {

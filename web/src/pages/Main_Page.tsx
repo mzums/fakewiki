@@ -189,11 +189,11 @@ function Main_Page() {
             </div>
 
 
-            <h4 id="view-all">
-                view  <Link to="/All_Articles">all articles...</Link>
-            </h4>
 
             <section id="cards">
+                <h4 id="view-all">
+                    view  <Link to="/All_Articles">all articles...</Link>
+                </h4>
                 <section id="card-row">
                     <section id="card">
                         <section id="card-title">
