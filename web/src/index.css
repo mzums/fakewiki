@@ -230,18 +230,25 @@ h2 {
   display: flex;
   flex-direction: row;
   gap: 50px;
+  max-width: 70%;
+  margin: 0 auto;
   margin-bottom: 50px;
+  text-align: left;
 }
 
 #content {
   margin-top: 100px;
-  margin-left: 10px;
-  align-content: left;
+  margin-left: 0;
+  max-width: 150px;
+}
+
+#content ul {
+  padding-left: 20px;
+  list-style-type: disc;
 }
 
 #article-text {
   margin-top: 50px;
-  width: 70%;
   font-weight: 300;
   margin-bottom: 150px;
 }
@@ -251,15 +258,14 @@ li {
   margin-left: -10px;
 }
 
-#article-list {
-  margin-left: 50px;
-  margin-top: 30px;
-}
-
 #list {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 2px;
+  grid-template-columns: 30% 30% auto;
+  gap: 10px;
+  justify-content: center;
+  padding: 0;
+  list-style-position: inside;
+  list-style-type: disc;
 }
 
 .image-frame {
@@ -292,7 +298,11 @@ b {
 }
 
 #article-list {
-  margin-bottom: 50px;
+  margin: 30px auto 50px 0px;
+}
+
+#list-title {
+  margin-left: 10%;
 }
 
 #full {
@@ -316,6 +326,41 @@ b {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 2px;
+  }
+
+  #content {
+    margin-top: 100px;
+    margin-left: 10px;
+    align-content: left;
+    max-width: 250px;
+  }
+
+  #list {
+    display: grid;
+    grid-template-columns: 20% 20% auto;
+    gap: 10px;
+    justify-content: center;
+    padding: 0;
+    list-style-position: inside;
+    list-style-type: disc;
+  }
+
+  #article-list {
+    margin: 30px auto 50px 50px;
+  }
+
+  #list-title {
+    margin-left: 23%;
+  }
+}
+
+@media (min-width: 2500px) {
+  #list-title {
+    margin-left: 27%;
+  }
+
+  #article-page {
+    max-width: 50%;
   }
 }
 

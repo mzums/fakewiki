@@ -52,7 +52,7 @@ function AllArticles() {
 
     return (
         <div id="article-list">
-            <h1>Article List</h1>
+            <h1 id="list-title">Article List</h1>
             <ul id="list">
                 {articles.map((article, index) => (
                     <li key={index}>
@@ -62,7 +62,7 @@ function AllArticles() {
                     </li>
                 ))}
             </ul>
-        </div>
+        </div >
     );
 }
 
