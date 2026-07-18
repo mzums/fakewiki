@@ -1,13 +1,14 @@
 # FakeWiki
 
-The goal of this project was to create a model that mimics the style of Wikipedia's articles. It was achived by building a GPT2-like transformer.  
-Generated articles are placed on a Wikipedia-like website.
+The goal of this project was to create a model that **mimics the style of Wikipedia's articles**. It was achived by building a **GPT2-like decode-only transformer**.  
+Generated articles are placed on a Wikipedia-like website.  
+The project was inspired by Andrej Karpathy's _Zero to Hero_ series
+
+# [The website](https://mzums.com/fakewiki)
 
 ## The model
 
-**decode-only transformer**
-
-Roadmap:
+### Roadmap:
 
 - bigrams
 - single head self-attention
@@ -56,7 +57,11 @@ Starting from loss ~ 11 it reached loss ~ 2,86 after 20000 steps of training
 
 ### _Did you know..._ section
 
-The model was finetuned for 250 steps on 33.5k DYK questions scraped from Wikipedia.
+The model was finetuned for 250 steps on ~33.5k DYK questions scraped from Wikipedia.
+
+### _On this day_ section
+
+Wikipedia contains only about 1.8k OTD entries, which is not sufficient to finetune the model and make it's predictions accurate
 
 ## Generation
 
@@ -77,7 +82,6 @@ TITLE: {title}
 
 ## Weaknesses of the model
 
-- The model naturally repeats some phrases. This can be later eliminated in generation (I am using `frequency_penalty=0.2` and `presence_penalty=0.1`, higher values ​​caused the model to generate fewer article sections)
 - The model does not have reasonable world knowledge
+- The model naturally repeats some phrases. This can be later eliminated in generation (I am using `frequency_penalty=0.2` and `presence_penalty=0.1`, higher values ​​caused the model to generate fewer article sections)
 - The model does not generate lists (due to absence of lists in training data)
-  asdfasdfasd

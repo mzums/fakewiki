@@ -3,9 +3,9 @@ import numpy as np
 import os
 import time
 
-#input_file = "../dev/wiki_clean.txt"
-input_file = "otd.txt"
-output_file = "tokens_otd.bin"
+input_file = "../dev/wiki_clean.txt"
+#input_file = "otd.txt"
+output_file = "tokens.bin"
 
 total_size = os.path.getsize(input_file)
 print(f"file size: {total_size / (1024**3):.2f} GB")
@@ -44,7 +44,7 @@ with open(input_file, 'r', encoding='utf-8') as f, open(output_file, 'wb') as fo
             eta_min = eta_seconds / 60
 
             print(f"  {percent:.1f}% | {current_mb} MB | "
-                  f"{total_tokens:,} tokenów | "
+                  f"{total_tokens:,} tokens | "
                   f"{speed:.0f} tok/s | "
                   f"ETA: ~{eta_min:.1f} min")
 

@@ -67,33 +67,31 @@ function Article() {
     if (!article) return <div>Article not found.</div>;
 
     return (
-        <div id="article-page-centered">
-            <div id="article-page">
-                <div id="content">
-                    <h3>Contents:</h3>
-                    <ul>
-                        {article.sections &&
-                            Object.entries(article.sections).map(([key, _]) => (
-                                <li key={key}>{key}</li>
-                            ))}
-                    </ul>
-                </div>
-
-                <div id="article-text">
-                    <div className="image-frame">
-                        <div className="image-caption">{title}</div>
-                        <img id="article-img" src="/image.png" alt="Image" />
-                    </div>
-
-                    <h1>{article.title}</h1>
+        <div id="article-page">
+            <div id="content">
+                <h3>Contents:</h3>
+                <ul>
                     {article.sections &&
-                        Object.entries(article.sections).map(([key, content]) => (
-                            <div key={key}>
-                                <h2>{key}</h2>
-                                <p>{content}</p>
-                            </div>
+                        Object.entries(article.sections).map(([key, _]) => (
+                            <li key={key}>{key}</li>
                         ))}
+                </ul>
+            </div>
+
+            <div id="article-text">
+                <div className="image-frame">
+                    <div className="image-caption">{title}</div>
+                    <img id="article-img" src="/image.png" alt="Image" />
                 </div>
+
+                <h1>{article.title}</h1>
+                {article.sections &&
+                    Object.entries(article.sections).map(([key, content]) => (
+                        <div key={key}>
+                            <h2>{key}</h2>
+                            <p>{content}</p>
+                        </div>
+                    ))}
             </div>
         </div>
     );

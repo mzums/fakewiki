@@ -239,7 +239,7 @@ h2 {
 #content {
   margin-top: 100px;
   margin-left: 0;
-  max-width: 150px;
+  max-width: 350px;
 }
 
 #content ul {
@@ -329,10 +329,8 @@ b {
   }
 
   #content {
-    margin-top: 100px;
-    margin-left: 10px;
-    align-content: left;
-    max-width: 250px;
+    max-width: 200px;
+    width: 100%;
   }
 
   #list {

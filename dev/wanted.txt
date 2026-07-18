@@ -1,0 +1,125 @@
+Ada Lovelace
+Alan Turing
+Grace Hopper
+John von Neumann
+Dennis Ritchie
+Ken Thompson
+Brian Kernighan
+Donald Knuth
+Edsger Dijkstra
+Alan Kay
+Linus Torvalds
+Richard Stallman
+Bill Gates
+Steve Wozniak
+James Gosling
+Bjarne Stroustrup
+Guido van Rossum
+Brendan Eich
+John Carmack
+Tim Berners Lee
+Margaret Hamilton
+Donald Chamberlin
+Larry Wall
+John McCarthy
+Niklaus Wirth
+Anders Hejlsberg
+Barbara Liskov
+Frances Allen
+Terry A. Davis
+Pythagoras
+Euclid
+Archimedes
+Diophantus
+Hypatia
+Aryabhata
+Brahmagupta
+Muhammad ibn Musa al-Khwarizmi
+Omar Khayyam
+Fibonacci
+René Descartes
+Pierre de Fermat
+Blaise Pascal
+Isaac Newton
+Gottfried Wilhelm Leibniz
+Daniel Bernoulli
+Leonhard Euler
+Joseph Louis Lagrange
+Pierre-Simon Laplace
+Carl Friedrich Gauss
+Augustin-Louis Cauchy
+Nikolai Lobachevsky
+János Bolyai
+Évariste Galois
+Niels Henrik Abel
+August Ferdinand Möbius
+George Boole
+Bernhard Riemann
+Karl Weierstrass
+Richard Dedekind
+Georg Cantor
+Henri Poincaré
+David Hilbert
+Hermann Minkowski
+Emmy Noether
+Srinivasa Ramanujan
+John von Neumann
+Kurt Gödel
+Alan Turing
+Andrey Kolmogorov
+Alexander Grothendieck
+Paul Erdős
+John Nash
+Grigori Perelman
+Maryam Mirzakhani
+Hippocrates
+Galen
+Avicenna
+Rhazes
+Maimonides
+Paracelsus
+Andreas Vesalius
+William Harvey
+Thomas Sydenham
+Edward Jenner
+Rene Theophile Hyacinthe Laennec
+Ignaz Semmelweis
+John Snow
+Joseph Lister
+Louis Pasteur
+Robert Koch
+Paul Ehrlich
+Sigmund Freud
+William Osler
+Theodor Kocher
+Santiago Ramón y Cajal
+Alexander Fleming
+Frederick Banting
+Charles Best
+Christiaan Barnard
+Helen B Taussig
+Alfred Blalock
+Vivien Thomas
+Jonas Salk
+Thomas Starzl
+Carlo Urbani
+Rudolf Virchow
+Alois Alzheimer
+Hans Asperger
+Elizabeth Blackwell
+Virginia Apgar
+Harvey Cushing
+Wilder Penfield
+Henry Gray
+Thomas Addison
+George Papanicolaou
+Albert Schweitzer
+John Hunter
+Ambroise Paré
+Garcia de Orta
+Charaka
+Susruta
+William McBride
+Magdi Yacoub
+Helen Flanders Dunbar
+Otto Heinrich Warburg

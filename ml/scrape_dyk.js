@@ -141,7 +141,7 @@
 
   if (confirm('Do you want to download a file with cleaned DYK points? (.txt)?')) {
     downloadFile(cleanReport, 'clean_DYK.txt', 'text/plain');
-    console.log('📥 File downloaded');
+    console.log('File downloaded');
   } else {
     console.log('Downloading cancelled. You can copy data from window.scrapedCleanLines or window.scrapedCleanReport.');
   }

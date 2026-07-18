@@ -127,7 +127,7 @@ class GPT(nn.Module):
     
 
 class DataLoaderLite:
-    def __init__(self, B, T, process_rank, num_processes, token_file="tokens_otd.bin", 
+    def __init__(self, B, T, process_rank, num_processes, token_file="tokens_dyk.bin", 
                  split='train', val_frac=0.05):
         self.B = B
         self.T = T
@@ -193,14 +193,14 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(1337)
 torch.cuda.manual_seed(1337)
 
-B, T = 2, 1024
+B, T = 16, 1024     # 2, 1024 for OTD
 total_batch_size = 131072
 ddp = False
 ddp_world_size = 1
 grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
 
 # read checkpoint
-checkpoint = torch.load("model_final2.pt", map_location=device, weights_only=False)
+checkpoint = torch.load("model_final.pt", map_location=device, weights_only=False)
 config = checkpoint['config']
 state_dict = checkpoint['model_state_dict']
 
@@ -263,4 +263,4 @@ for step in range(extra_steps):
 torch.save({
     'model_state_dict': raw_model.state_dict(),
     'config': config
-}, "model_otd.pt")
+}, "model_dyk.pt")

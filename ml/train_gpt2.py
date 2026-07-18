@@ -317,7 +317,7 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed(1337)
 
 # gradient accumulation
-total_batch_size = 131072   # 2**19 ~0.5M tokens
+total_batch_size = 131072
 B = 16      # micro batch size
 T = 1024    # sequence length
 assert total_batch_size % (B * T * ddp_world_size) == 0, "total_batch_size shoudl be divisibel by B * T * ddp_world_size"
@@ -452,7 +452,7 @@ if master_process:
     torch.save({
     'model_state_dict': raw_model.state_dict(),
     'config': config
-}, "model_final2.pt")
+}, "model_final.pt")
 
 if ddp:
     destroy_process_group()

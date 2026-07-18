@@ -108,10 +108,9 @@ class GPT(nn.Module):
 # ============================================
 
 def load_checkpoint():
-    print("Loading model from: model_final2.pt")
-    print("This may take a moment...")
+    print("Loading model from: model_final.pt")
 
-    checkpoint = torch.load("model_final2.pt", map_location='cpu', weights_only=False)
+    checkpoint = torch.load("model_final.pt", map_location='cpu', weights_only=False)
 
     print("\nCheckpoint contents:")
     print("  Keys:", list(checkpoint.keys()))
@@ -316,7 +315,7 @@ def parse_other(text: str, cnt):
     return {"id": cnt, "content": text}
 
 def to_json(model, cfg, output_file='articles.json'):
-    file_path = 'a.txt'
+    file_path = 'to_generate.txt'
     with open(file_path, 'r') as file:
         titles = [line.strip() for line in file if line.strip()]
 

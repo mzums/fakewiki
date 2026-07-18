@@ -1,2 +1,15 @@
 dev/input.txt
 dev/data/*
+ml/__pycache__
+dev/tokens_flat.npy
+dev/tokens_lengths.npy
+dev/wiki.txt
+dev/wiki_clean.txt
+ml/model_dyk.pt
+ml/model_final.pt
+ml/model_otd.pt
+dev/vocab.json
+dev/vocab.pkl
+ml/tokens_dyk.bin
+ml/tokens_otd.bin
+ml/tokens.bin
