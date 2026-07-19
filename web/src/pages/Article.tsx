@@ -82,7 +82,7 @@ function Article() {
             <div id="article-text">
                 <div className="image-frame">
                     <div className="image-caption">{title}</div>
-                    <img id="article-img" src="/image.png" alt="Image" />
+                    <img id="article-img" src="/fakewiki/image.png" alt="Image" />
                 </div>
 
                 <h1>{article.title}</h1>
