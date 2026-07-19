@@ -65,7 +65,8 @@ function Main_Page() {
 
         const fetchDYK = async () => {
             try {
-                const response = await fetch('/dyk.json');
+                const baseUrl = import.meta.env.BASE_URL || '/';
+                const response = await fetch(`${baseUrl}dyk.json`);
                 if (!response.ok) throw new Error('Error loading file');
 
                 const text = await response.text();
@@ -95,7 +96,8 @@ function Main_Page() {
 
         const fetchArticles = async () => {
             try {
-                const response = await fetch('/articles.json');
+                const baseUrl = import.meta.env.BASE_URL || '/';
+                const response = await fetch(`${baseUrl}articles.json`);
                 if (!response.ok) throw new Error('Error loading file');
 
                 const text = await response.text();
@@ -127,7 +129,8 @@ function Main_Page() {
 
         const fetchPopular = async () => {
             try {
-                const response = await fetch('/articles.json');
+                const baseUrl = import.meta.env.BASE_URL || '/';
+                const response = await fetch(`${baseUrl}articles.json`);
                 if (!response.ok) throw new Error('Error loading file');
 
                 const text = await response.text();
@@ -175,7 +178,7 @@ function Main_Page() {
     return (
         <>
             <div className="main-container">
-                <img id="main-img" src="/fake2.png" alt="logo" />
+                <img id="main-img" src="fake2.png" alt="logo" />
                 <section id="welcome">
                     <h1>Welcome to <a href="https://github.com/mzums/fakewiki">FakeWiki</a>,</h1>
                     <h3>the fake encyclopedia maintained by <a href="https://mzums.com">mzums</a></h3>
@@ -230,9 +233,9 @@ function Main_Page() {
                 <section id="card-row">
                     <section id="card">
                         <section id="card-title">
-                            Did you know..
+                            Did you know...
                         </section>
-                        <ul>
+                        <ul id="dyk-list">
                             {dyk.map((dyk, index) => (
                                 <li key={index}>
                                     {dyk.content}
