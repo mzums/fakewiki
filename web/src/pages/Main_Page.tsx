@@ -28,13 +28,28 @@ function Main_Page() {
 
         const dateSeed = +new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
-        const pickDYK = <T,>(arr: T[], n = 10): NonNullable<T>[] => {
+        const pickDYK = <T,>(
+            arr: T[],
+            seed: number,
+            count = 10
+        ): NonNullable<T>[] => {
             const result: NonNullable<T>[] = [];
-            for (let i = 0; i < n; i++) {
-                const r = hashInt(dateSeed + i) / 0xFFFFFFFF;
-                const idx = Math.floor(r * arr.length);
-                result.push(arr[idx] as NonNullable<T>);
+
+            for (let i = 0; i < count; i++) {
+                const random = hashInt(seed + Math.imul(i, 0x9E3779B1)) / 0xFFFFFFFF;
+                const index = Math.floor(random * arr.length);
+                const picked = arr[index];
+
+                if (picked != null) {
+                    result.push(picked as NonNullable<T>);
+                } else {
+                    const fallback = arr.find(item => item != null);
+                    if (fallback != null) {
+                        result.push(fallback as NonNullable<T>);
+                    }
+                }
             }
+
             return result;
         };
 
@@ -85,7 +100,7 @@ function Main_Page() {
                     console.log("Error parsing DYK")
                 }
 
-                const selected = pickDYK(data, 10);
+                const selected = pickDYK(data, dateSeed, 10);
                 setDyk(selected);
             } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
